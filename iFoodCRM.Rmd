@@ -1,0 +1,161 @@
+---
+title: "iFood CRM Data Analysis"
+output:
+  html_document:
+    df_print: paged
+---
+
+## Libraries
+
+```{r warning=FALSE, message = FALSE}
+#load libraries
+library(ggcorrplot)
+library(rcompanion)
+library(effectsize)
+library(corrplot)
+library(ggplot2)
+library(robustbase)
+library(litteR)
+library(ggpubr)
+library(ggstatsplot)
+library(flextable)
+library(dlookr)
+```
+
+## Data reading
+```{r}
+# Reading data
+data <- read.csv('ifood_df.csv')
+data <- data[,-c(21,22,23,24,26)] # Deleting unnecessary columns
+data <- data[,order(names(data))]
+```
+
+## Outlier Detection
+I perfomed outlier detection with the use of adjusted boxplots for non normally distributed data
+```{r}
+# Outlier detection with the adjusted boxplots for non parametric data
+dataBox = data
+p1 <- ggplot(data = dataBox, aes(x="", y=Age, fill = 'darkred')) + stat_adj_boxplot() + stat_adj_boxplot_outlier() + xlab('Age') + ylab('') + theme(legend.position = "none")
+p2 <- ggplot(data = dataBox, aes(x="", y=Income, fill = 'darkred')) + stat_adj_boxplot() + xlab('Income') + ylab('') + theme(legend.position = "none")
+p3 <- ggplot(data = dataBox, aes(x="", y=Kidhome, fill = 'darkred')) + stat_adj_boxplot() + xlab('Kidhome') + ylab('') + theme(legend.position = "none")
+p4 <- ggplot(data = dataBox, aes(x="", y=MntFishProducts, fill = 'darkred')) + stat_adj_boxplot() + xlab('MntFishProducts') + ylab('') + theme(legend.position = "none")
+p5 <- ggplot(data = dataBox, aes(x="", y=MntFruits, fill = 'darkred')) + stat_adj_boxplot() + xlab('MntFruits') + ylab('') + theme(legend.position = "none") + theme(legend.position = "none")
+p6 <- ggplot(data = dataBox, aes(x="", y=MntGoldProds, fill = 'darkred')) + stat_adj_boxplot() + xlab('MntGoldProds') + ylab('') + stat_adj_boxplot_outlier() + theme(legend.position = "none")
+p7 <- ggplot(data = dataBox, aes(x="", y=MntMeatProducts, fill = 'darkred')) + stat_adj_boxplot() + xlab('MntMeatProducts') + ylab('') + theme(legend.position = "none")
+p8 <- ggplot(data = dataBox, aes(x="", y=MntRegularProds, fill = 'darkred')) + stat_adj_boxplot() + xlab('MntRegularProds') + ylab('') + stat_adj_boxplot_outlier() + theme(legend.position = "none")
+p9 <- ggplot(data = dataBox, aes(x="", y=MntSweetProducts, fill = 'darkred')) + stat_adj_boxplot() + xlab('MntSweetProducts') + ylab('') + theme(legend.position = "none")
+p10 <- ggplot(data = dataBox, aes(x="", y=MntTotal, fill = 'darkred')) + stat_adj_boxplot() + xlab('MntTotal') + ylab('') + theme(legend.position = "none")
+p11 <- ggplot(data = dataBox, aes(x="", y=MntWines, fill = 'darkred')) + stat_adj_boxplot() + xlab('MntWines') + ylab('') + theme(legend.position = "none")
+p12 <- ggplot(data = dataBox, aes(x="", y=NumCatalogPurchases, fill = 'darkred')) + stat_adj_boxplot() + xlab('NumCatalogPurchases') + ylab('') + stat_adj_boxplot_outlier() + theme(legend.position = "none")
+p13 <- ggplot(data = dataBox, aes(x="", y=NumDealsPurchases, fill = 'darkred')) + stat_adj_boxplot() + stat_adj_boxplot_outlier() + xlab('NumDealsPurchases') + ylab('') + theme(legend.position = "none")
+p14 <- ggplot(data = dataBox, aes(x="", y=NumStorePurchases, fill = 'darkred')) + stat_adj_boxplot() + xlab('NumStorePurchases') + ylab('') + stat_adj_boxplot_outlier() + theme(legend.position = "none")
+p15 <- ggplot(data = dataBox, aes(x="", y=NumWebPurchases, fill = 'darkred')) + stat_adj_boxplot() + xlab('NumWebPurchases') + ylab('') + stat_adj_boxplot_outlier() + theme(legend.position = "none")
+p16 <- ggplot(data = dataBox, aes(x="", y=NumWebVisitsMonth, fill = 'darkred')) + stat_adj_boxplot() + stat_adj_boxplot_outlier() + xlab('NumWebVisitsMonth') + ylab('') + stat_adj_boxplot_outlier() + theme(legend.position = "none")
+
+
+theme_set(theme_pubr())
+ggarrange(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16)
+
+
+# Removing outliers
+outliers <- c(44, 1151, 677, 728, 976, 1825, 2181, 401, 895, 1144, 376, 902, 909, 1331, 2062, 1873, 1950)
+deals = which(data$NumDealsPurchases >= 7)
+store = which(data$NumStorePurchases <= 1)
+webVisit = which(data$NumWebVisitsMonth >= 10)
+
+outs <- c(outliers, deals, store, webVisit)
+outs <- unique(outs)
+dataOut <- data[-c(outs),]
+```
+## QQ_Plots
+We can see here some rigth and over skewness
+```{r}
+# QQ-Plots for choosed features
+qqnorm(dataOut$Income, pch = 1, frame = FALSE, main = 'Income')
+qqline(dataOut$Income, col = "steelblue", lwd = 2)
+
+qqnorm(dataOut$Age, pch = 1, frame = FALSE, main = 'Age')
+qqline(dataOut$Age, col = "steelblue", lwd = 2)
+
+qqnorm(dataOut$MntMeatProducts, pch = 1, frame = FALSE, main = 'MntMeatProducts')
+qqline(dataOut$MntMeatProducts, col = "steelblue", lwd = 2)
+
+qqnorm(dataOut$MntSweetProducts, pch = 1, frame = FALSE, main = 'MntSweetProducts')
+qqline(dataOut$MntSweetProducts, col = "steelblue", lwd = 2)
+
+```
+## Biserial correlation
+I calculated biserial correlation between each campaing and other feathers to find what made costumers to participate in promotion
+```{r}
+# Calculating biserial correlation
+dataOutCor <- dataOut[,c(1:15, 25:34)]
+cols <- colnames(dataOutCor)
+correlations <- data.frame(AcceptedCmp1 = seq(0,0, length = 25), AcceptedCmp2 = seq(0,0, length = 25),
+                           AcceptedCmp3 = seq(0,0, length = 25), AcceptedCmp4 = seq(0,0, length = 25),
+                           AcceptedCmp5 = seq(0,0, length = 25), feature = colnames(dataOutCor))
+rownames(correlations) <- correlations$feature
+
+for (i in cols){
+  #print(data[,i])
+  cor <- wilcoxonRG(dataOut[,i], as.factor(dataOut$AcceptedCmp1))
+  correlations[i,1] = as.numeric(cor)
+}
+
+for (i in cols){
+  #print(data[,i])
+  cor <- wilcoxonRG(dataOut[,i], as.factor(dataOut$AcceptedCmp2))
+  correlations[i,2] = as.numeric(cor)
+}
+
+for (i in cols){
+  #print(data[,i])
+  cor <- wilcoxonRG(dataOut[,i], as.factor(dataOut$AcceptedCmp3))
+  correlations[i,3] = as.numeric(cor)
+}
+
+for (i in cols){
+  #print(data[,i])
+  cor <- wilcoxonRG(dataOut[,i], as.factor(dataOut$AcceptedCmp4))
+  correlations[i,4] = as.numeric(cor)
+}
+
+for (i in cols){
+  #print(data[,i])
+  cor <- wilcoxonRG(dataOut[,i], as.factor(dataOut$AcceptedCmp5))
+  correlations[i,5] = as.numeric(cor)
+}
+correlationsMatrix <- as.matrix(correlations[,-c(6)])
+correlationsMatrix <- t(correlationsMatrix)
+correlationsMatrix <- correlationsMatrix *(-1)
+
+corrplot(correlationsMatrix, method="color", addCoef.col = "black")
+```
+
+## Kruskal-Wallis tests
+Anova-like test(for non-parametric data) to find any differences between groups 
+```{r}
+# Kruskal-Wallis tests
+ggbetweenstats(data = dataOut,
+               x=  AcceptedCmpOverall,
+               y= Income,
+               type = "nonparametric",
+               pairwise.display = "significant",
+               p.adjust.method = "holm")
+
+ggbetweenstats(data = dataOut,
+               x=  AcceptedCmpOverall,
+               y= Age,
+               type = "nonparametric",
+               pairwise.display = "significant",
+               p.adjust.method = "holm")
+
+ggbetweenstats(data = dataOut,
+               x=  AcceptedCmpOverall,
+               y= Recency,
+               type = "nonparametric",
+               pairwise.display = "significant",
+               p.adjust.method = "holm")
+```
+
+
+
